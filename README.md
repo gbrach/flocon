@@ -18,6 +18,10 @@ Click the snowflake in the menu bar to change snowfall, wind, accumulation, melt
 
 Snow and lights pause when the lid is closed, or during sleep.
 
+## Updates
+
+Flocon checks GitHub for a newer release once at launch and only tells you if there is one. You can also choose **Check for Updates…** in the menu. It's a plain request to GitHub's public releases page, with no account, identifiers or analytics, but like any web request GitHub sees your IP address and the app and macOS version.
+
 ## Build
 
 If you want to build it yourself...
