@@ -54,6 +54,10 @@ final class Renderer: NSObject, MTKViewDelegate {
     private var cableCount = 0
     private(set) var behindWindows = false
     var lightsVisible = false
+    var lightStyle = LightStyle.standard {
+        didSet { if lightStyle != oldValue, let layout = lightLayout { configureLights(width: layout.0, height: layout.1, topInset: layout.2) } }
+    }
+    private var lightLayout: (Float, Float, Float)?
     var reduceMotion = false
     var interactiveFrameRate = 60
     var budget = PowerBudget.full
@@ -100,7 +104,8 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
     func close() { desktop?.close(); desktop = nil }
     func configureLights(width: Float, height: Float, topInset: Float) {
-        let geometry = ChristmasLightGeometry(width: width, height: height, topInset: topInset)
+        lightLayout = (width, height, topInset)
+        let geometry = ChristmasLightGeometry(width: width, height: height, topInset: topInset, style: lightStyle)
         bulbCount = geometry.bulbs.count; cableCount = geometry.wire.count
         bulbs = geometry.bulbs.withUnsafeBytes { device.makeBuffer(bytes: $0.baseAddress!, length: $0.count, options: .storageModeShared) }
         cable = geometry.wire.withUnsafeBytes { device.makeBuffer(bytes: $0.baseAddress!, length: $0.count, options: .storageModeShared) }

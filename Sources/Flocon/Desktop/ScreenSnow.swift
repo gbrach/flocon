@@ -70,9 +70,12 @@ final class ScreenSnow {
     private func synchronizePlanes() {
         renderer.configureDesktop(frame: screen.frame, behindWindows: window.behindWindows, visible: showing, capture: window.showsInScreenshots)
     }
-    func setChristmasLights(_ enabled: Bool) {
+    func setChristmasLights(_ enabled: Bool, style: LightStyle) {
         renderer.lightsVisible = enabled
         renderer.reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        var style = style
+        if renderer.reduceMotion { style.blink = .steady }
+        renderer.lightStyle = style
         synchronizePlanes()
         renderer.invalidate()
     }

@@ -14,6 +14,8 @@ Intel and Apple Silicon are supported
 
 Click the snowflake in the menu bar to change snowfall, wind, accumulation, melting and lights; cozy winter, hot chocolate!
 
+**Light Style** picks the bulb density (sparse to dense), the color (classic or warm white) and the blinking (steady, slow, fast, twinkle or chase).
+
 **Behind Windows** keeps falling snow behind your apps while it still settles on window tops. The lights work with or without a notch! Get some Christmas spirit :)
 
 Snow and lights pause when the lid is closed, or during sleep.

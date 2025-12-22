@@ -66,7 +66,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             scene.window.behindWindows = Preferences.behindWindows
             scene.window.showsInScreenshots = Preferences.showInScreenshots
             scene.dock.window.showsInScreenshots = Preferences.showInScreenshots
-            scene.setChristmasLights(Preferences.christmasLights)
+            scene.setChristmasLights(Preferences.christmasLights, style: Preferences.lightStyle)
             if !Preferences.snowOnWindows { scene.dropWindowSnow() }
             scene.apply(power.budget)
         }
@@ -109,6 +109,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         clear.target = self
         menu.addItem(.separator())
         add("Christmas Lights", key: "christmasLights", to: menu)
+        let lights = NSMenu(title: "Light Style")
+        lights.delegate = self
+        lightGroup("Density", key: "lightDensity", options: LightDensity.allCases.map { ($0.title, $0.rawValue) }, in: lights)
+        lightGroup("Color", key: "lightColor", options: LightColor.allCases.map { ($0.title, $0.rawValue) }, in: lights)
+        lightGroup("Blinking", key: "lightBlink", options: LightBlink.allCases.map { ($0.title, $0.rawValue) }, in: lights)
+        submenu("Light Style", menu: lights, to: menu)
         add("Energy Saving", key: "energySaver", to: menu)
         add("Behind Windows", key: "behindWindows", to: menu)
         add("Show in Screenshots", key: "showInScreenshots", to: menu)
@@ -129,6 +135,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         parent.addItem(row)
     }
 
+    private func lightGroup(_ title: String, key: String, options: [(String, Int)], in menu: NSMenu) {
+        if !menu.items.isEmpty { menu.addItem(.separator()) }
+        menu.addItem(NSMenuItem.sectionHeader(title: title))
+        for (name, value) in options {
+            let row = menu.addItem(withTitle: name, action: #selector(selectLightOption(_:)), keyEquivalent: "")
+            row.target = self
+            row.tag = value
+            row.representedObject = key
+        }
+    }
+
     private func add(_ title: String, key: String, to menu: NSMenu) {
         let row = menu.addItem(withTitle: title, action: #selector(toggle(_:)), keyEquivalent: "")
         row.target = self
@@ -142,6 +159,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             switch key {
             case "snowfall": selected = Preferences.snowfall.rawValue == row.tag
             case "wind": selected = Int(Preferences.wind.rounded()) == row.tag
+            case "lightDensity", "lightColor", "lightBlink": selected = UserDefaults.standard.integer(forKey: key) == row.tag
             case "login": selected = SMAppService.mainApp.status == .enabled
             default: selected = UserDefaults.standard.bool(forKey: key)
             }
@@ -157,6 +175,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
     @objc private func selectSnowfall(_ sender: NSMenuItem) {
         Preferences.snowfall = Snowfall(rawValue: sender.tag) ?? .moderate
+        applyPreferences()
+    }
+    @objc private func selectLightOption(_ sender: NSMenuItem) {
+        guard let key = sender.representedObject as? String else { return }
+        UserDefaults.standard.set(sender.tag, forKey: key)
         applyPreferences()
     }
     @objc private func selectWind(_ sender: NSMenuItem) {

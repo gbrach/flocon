@@ -8,12 +8,18 @@ enum Preferences {
             "enabled": true, "snowfall": Snowfall.moderate.rawValue,
             "accumulate": true, "meltSnow": true, "snowOnWindows": true,
             "interactions": true, "wind": 1.0, "energySaver": false,
-            "christmasLights": false, "behindWindows": false, "showInScreenshots": false,
+            "christmasLights": false, "lightDensity": LightDensity.normal.rawValue,
+            "lightColor": LightColor.classic.rawValue, "lightBlink": LightBlink.steady.rawValue, "behindWindows": false, "showInScreenshots": false,
         ])
     }
     static var christmasLights: Bool {
         get { defaults.bool(forKey: "christmasLights") }
         set { defaults.set(newValue, forKey: "christmasLights") }
+    }
+    static var lightStyle: LightStyle {
+        LightStyle(density: LightDensity(rawValue: defaults.integer(forKey: "lightDensity")) ?? .normal,
+                   color: LightColor(rawValue: defaults.integer(forKey: "lightColor")) ?? .classic,
+                   blink: LightBlink(rawValue: defaults.integer(forKey: "lightBlink")) ?? .steady)
     }
     static var enabled: Bool {
         get { defaults.bool(forKey: "enabled") }

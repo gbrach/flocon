@@ -4,7 +4,7 @@ using namespace metal;
 struct Frame { float2 extent; float time; float scale; };
 struct Instance { float2 center; float size; float opacity; float4 color; float4 motion; };
 struct MeshPoint { float2 point; float4 color; };
-struct Pixel { float4 clip [[position]]; float2 local; float2 world; float4 color; float material; float phase; };
+struct Pixel { float4 clip [[position]]; float2 local; float2 world; float4 color; float material; float phase; float time; float2 extra; };
 
 static float4 project(float2 p, constant Frame &f) { return float4(2.0 * p / f.extent - 1.0, 0.0, 1.0); }
 
@@ -20,14 +20,29 @@ vertex Pixel flakeQuad(uint corner [[vertex_id]], uint instance [[instance_id]],
     out.clip = project(p, f); out.local = local; out.world = p;
     out.color = float4(s.color.rgb, s.opacity); out.material = s.motion.z;
     out.phase = s.motion.w + f.time * (0.6 + fract(s.motion.w));
+    out.time = f.time; out.extra = s.motion.xy;
     return out;
+}
+// Brightness of one bulb for a LightBlink pattern: 0 steady, 1 slow, 2 fast, 3 twinkle, 4 chase.
+static float bulbLevel(int mode, float n, float t) {
+    const float dim = 0.12;
+    if (mode == 1 || mode == 2) {
+        float rate = mode == 1 ? 1.6 : 5.0;
+        return dim + (1.0 - dim) * smoothstep(0.0, 1.0, 0.5 + 0.5 * sin(t * rate + fmod(n, 2.0) * M_PI_F));
+    }
+    if (mode == 3) {
+        float r = fract(sin(n * 12.9898) * 43758.5453);
+        return dim + (1.0 - dim) * pow(0.5 + 0.5 * sin(t * (1.2 + 2.0 * r) + r * 40.0), 2.0);
+    }
+    if (mode == 4) return dim + (1.0 - dim) * pow(0.5 + 0.5 * sin(t * 4.0 - n * 0.7), 3.0);
+    return 1.0;
 }
 fragment float4 flakePixel(Pixel p [[stage_in]]) {
     float distance = length(p.local);
     if (p.material > 1.5) {
         float bulb = 1.0 - smoothstep(0.3, 0.58, length(p.local * float2(1.2, 1.0)));
         float halo = 0.10 * exp(-distance * 4.0);
-        float a = (bulb + halo) * (0.94 + 0.06 * sin(p.phase));
+        float a = (bulb + halo) * (0.94 + 0.06 * sin(p.phase)) * bulbLevel(int(p.extra.x + 0.5), p.extra.y, p.time);
         float3 color = mix(p.color.rgb, float3(1,0.98,0.88), 0.45 * exp(-distance * 9.0));
         return float4(color * a, a);
     }
@@ -39,7 +54,7 @@ fragment float4 flakePixel(Pixel p [[stage_in]]) {
 vertex Pixel snowMesh(uint index [[vertex_id]], const device MeshPoint *mesh [[buffer(0)]], constant Frame &f [[buffer(1)]]) {
     MeshPoint v = mesh[index];
     Pixel p; p.clip = project(v.point, f); p.world = v.point; p.local = 0;
-    p.color = v.color; p.material = 0; p.phase = 0;
+    p.color = v.color; p.material = 0; p.phase = 0; p.time = 0; p.extra = 0;
     return p;
 }
 fragment float4 snowPixel(Pixel p [[stage_in]], constant float4 *covers [[buffer(0)]], constant uint &count [[buffer(1)]]) {
