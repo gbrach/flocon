@@ -1,8 +1,17 @@
+<div align="center">
+
 <h1><img src="Resources/AppIcon.png" alt="" width="72" height="72" align="middle"> Flocon</h1>
 
 Snow on your desktop and window tops! Christmas spirit directly beamed into your Mac!! Shake a window to knock it off, or push it aside with the cursor. Christmas lights included :)
 
+[![Download](https://img.shields.io/badge/Download-Flocon.dmg-2ea44f?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/gbrach/flocon/releases/latest/download/Flocon.dmg)
+
+![macOS 14+](https://img.shields.io/badge/macOS-14%2B-lightgrey?logo=apple&logoColor=white)
+![Intel + Apple Silicon](https://img.shields.io/badge/Intel%20%2B%20Apple%20Silicon-universal-blue)
+
 [![Flocon demo](assets/flocon-demo.gif)](assets/flocon-demo.mp4)
+
+</div>
 
 ## Install
 
