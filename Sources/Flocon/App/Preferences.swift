@@ -10,6 +10,7 @@ enum Preferences {
             "interactions": true, "wind": 1.0, "energySaver": false,
             "christmasLights": false, "lightDensity": LightDensity.normal.rawValue,
             "lightColor": LightColor.classic.rawValue, "lightBlink": LightBlink.steady.rawValue, "behindWindows": false, "showInScreenshots": false,
+            "music": false, "musicVolume": MusicVolume.soft.rawValue,
         ])
     }
     static var christmasLights: Bool {
@@ -20,6 +21,13 @@ enum Preferences {
         LightStyle(density: LightDensity(rawValue: defaults.integer(forKey: "lightDensity")) ?? .normal,
                    color: LightColor(rawValue: defaults.integer(forKey: "lightColor")) ?? .classic,
                    blink: LightBlink(rawValue: defaults.integer(forKey: "lightBlink")) ?? .steady)
+    }
+    static var music: Bool {
+        get { defaults.bool(forKey: "music") }
+        set { defaults.set(newValue, forKey: "music") }
+    }
+    static var musicVolume: MusicVolume {
+        MusicVolume(rawValue: defaults.integer(forKey: "musicVolume")) ?? .soft
     }
     static var enabled: Bool {
         get { defaults.bool(forKey: "enabled") }

@@ -13,7 +13,7 @@ enum LightColor: Int, CaseIterable {
     var palette: [SIMD3<Float>] {
         switch self {
         case .classic: [SIMD3(1, 0.19, 0.13), SIMD3(1, 0.72, 0.15), SIMD3(0.18, 0.83, 0.45), SIMD3(0.27, 0.55, 1)]
-        case .warmWhite: [SIMD3(1, 0.76, 0.42)]
+        case .warmWhite: [SIMD3(1, 0.88, 0.62), SIMD3(1, 0.72, 0.36), SIMD3(1, 0.82, 0.5), SIMD3(1, 0.62, 0.26)]
         }
     }
 }

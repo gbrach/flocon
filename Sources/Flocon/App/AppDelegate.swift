@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var device: MTLDevice!
     private let power = PowerMonitor()
     private let lid = LidMonitor()
+    private let music = MusicPlayer()
     private var observers: [(NotificationCenter, NSObjectProtocol)] = []
     private var visibilityTimer: Timer?
     private var activity = ActivityState()
@@ -70,6 +71,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if !Preferences.snowOnWindows { scene.dropWindowSnow() }
             scene.apply(power.budget)
         }
+        music.volume = Preferences.musicVolume.level
         statusItem.button?.appearsDisabled = !Preferences.enabled
         updateActivity()
     }
@@ -82,46 +84,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.autoenablesItems = false
         menu.delegate = self
         add("Enable Flocon", key: "enabled", to: menu)
-        let snowfall = NSMenu(title: "Snowfall")
-        snowfall.delegate = self
-        for value in Snowfall.allCases {
-            let row = snowfall.addItem(withTitle: value.title, action: #selector(selectSnowfall(_:)), keyEquivalent: "")
-            row.target = self
-            row.tag = value.rawValue
-            row.representedObject = "snowfall"
-        }
-        submenu("Snowfall", menu: snowfall, to: menu)
-        let wind = NSMenu(title: "Wind")
-        wind.delegate = self
-        for (index, title) in ["Still", "Gentle", "Breezy", "Gusty"].enumerated() {
-            let row = wind.addItem(withTitle: title, action: #selector(selectWind(_:)), keyEquivalent: "")
-            row.target = self
-            row.tag = index
-            row.representedObject = "wind"
-        }
-        submenu("Wind", menu: wind, to: menu)
         menu.addItem(.separator())
-        add("Accumulate Snow", key: "accumulate", to: menu)
-        add("Snow on Windows", key: "snowOnWindows", to: menu)
-        add("Cursor Interactions", key: "interactions", to: menu)
-        add("Melt Snow", key: "meltSnow", to: menu)
-        let clear = menu.addItem(withTitle: "Clear Snow", action: #selector(clearSnow), keyEquivalent: "")
+
+        let snow = submenu("Snow", in: menu)
+        group("Snowfall", key: "snowfall", action: #selector(selectSnowfall(_:)),
+              options: Snowfall.allCases.map { ($0.title, $0.rawValue) }, in: snow)
+        group("Wind", key: "wind", action: #selector(selectWind(_:)),
+              options: ["Still", "Gentle", "Breezy", "Gusty"].enumerated().map { ($1, $0) }, in: snow)
+        snow.addItem(.separator())
+        add("Accumulate Snow", key: "accumulate", to: snow)
+        add("Snow on Windows", key: "snowOnWindows", to: snow)
+        add("Cursor Interactions", key: "interactions", to: snow)
+        add("Melt Snow", key: "meltSnow", to: snow)
+        snow.addItem(.separator())
+        let clear = snow.addItem(withTitle: "Clear Snow", action: #selector(clearSnow), keyEquivalent: "")
         clear.target = self
+
+        let lights = submenu("Christmas Lights", in: menu)
+        add("Show Lights", key: "christmasLights", to: lights)
+        group("Density", key: "lightDensity", options: LightDensity.allCases.map { ($0.title, $0.rawValue) }, in: lights)
+        group("Color", key: "lightColor", options: LightColor.allCases.map { ($0.title, $0.rawValue) }, in: lights)
+        group("Blinking", key: "lightBlink", options: LightBlink.allCases.map { ($0.title, $0.rawValue) }, in: lights)
+
+        let music = submenu("Music", in: menu)
+        add("Play Carols", key: "music", to: music)
+        group("Volume", key: "musicVolume", options: MusicVolume.allCases.map { ($0.title, $0.rawValue) }, in: music)
+
         menu.addItem(.separator())
-        add("Christmas Lights", key: "christmasLights", to: menu)
-        let lights = NSMenu(title: "Light Style")
-        lights.delegate = self
-        lightGroup("Density", key: "lightDensity", options: LightDensity.allCases.map { ($0.title, $0.rawValue) }, in: lights)
-        lightGroup("Color", key: "lightColor", options: LightColor.allCases.map { ($0.title, $0.rawValue) }, in: lights)
-        lightGroup("Blinking", key: "lightBlink", options: LightBlink.allCases.map { ($0.title, $0.rawValue) }, in: lights)
-        submenu("Light Style", menu: lights, to: menu)
-        add("Energy Saving", key: "energySaver", to: menu)
-        add("Behind Windows", key: "behindWindows", to: menu)
-        add("Show in Screenshots", key: "showInScreenshots", to: menu)
-        let login = menu.addItem(withTitle: "Launch at Login", action: #selector(toggleLogin), keyEquivalent: "")
+        let settings = submenu("Settings", in: menu)
+        add("Energy Saving", key: "energySaver", to: settings)
+        add("Behind Windows", key: "behindWindows", to: settings)
+        add("Show in Screenshots", key: "showInScreenshots", to: settings)
+        let login = settings.addItem(withTitle: "Launch at Login", action: #selector(toggleLogin), keyEquivalent: "")
         login.target = self
         login.representedObject = "login"
-        let update = menu.addItem(withTitle: "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: "")
+        let update = settings.addItem(withTitle: "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: "")
         update.target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Flocon", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -129,17 +126,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return item
     }
 
-    private func submenu(_ title: String, menu child: NSMenu, to parent: NSMenu) {
+    private func submenu(_ title: String, in parent: NSMenu) -> NSMenu {
+        let child = NSMenu(title: title)
+        child.autoenablesItems = false
+        child.delegate = self
         let row = NSMenuItem(title: title, action: nil, keyEquivalent: "")
         row.submenu = child
         parent.addItem(row)
+        return child
     }
 
-    private func lightGroup(_ title: String, key: String, options: [(String, Int)], in menu: NSMenu) {
+    private func group(_ title: String, key: String, action: Selector = #selector(selectLightOption(_:)), options: [(String, Int)], in menu: NSMenu) {
         if !menu.items.isEmpty { menu.addItem(.separator()) }
         menu.addItem(NSMenuItem.sectionHeader(title: title))
         for (name, value) in options {
-            let row = menu.addItem(withTitle: name, action: #selector(selectLightOption(_:)), keyEquivalent: "")
+            let row = menu.addItem(withTitle: name, action: action, keyEquivalent: "")
             row.target = self
             row.tag = value
             row.representedObject = key
@@ -159,7 +160,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             switch key {
             case "snowfall": selected = Preferences.snowfall.rawValue == row.tag
             case "wind": selected = Int(Preferences.wind.rounded()) == row.tag
-            case "lightDensity", "lightColor", "lightBlink": selected = UserDefaults.standard.integer(forKey: key) == row.tag
+            case "lightDensity", "lightColor", "lightBlink", "musicVolume": selected = UserDefaults.standard.integer(forKey: key) == row.tag
             case "login": selected = SMAppService.mainApp.status == .enabled
             default: selected = UserDefaults.standard.bool(forKey: key)
             }
@@ -237,6 +238,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         activity.enabled = Preferences.enabled
         activity.lidClosed = lid.isClosed
         let awake = activity.isRunning
+        music.setPlaying(awake && Preferences.music)
         for scene in screens { scene.setVisible(awake && !covered.contains(scene.displayID)) }
         if awake && visibilityTimer == nil {
             let timer = Timer(timeInterval: 2, repeats: true) { [weak self] _ in self?.checkCoverage() }

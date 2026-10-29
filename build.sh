@@ -26,6 +26,5 @@ else
 fi
 codesign --verify --deep --strict "$app"
 lipo -archs "$app/Contents/MacOS/Flocon"
-ditto -c -k --sequesterRsrc --keepParent "$app" build/Flocon.zip
 ./scripts/package-dmg.sh "$app" build/Flocon.dmg
-print "Built $app, build/Flocon.zip and build/Flocon.dmg"
+print "Built $app and build/Flocon.dmg"
