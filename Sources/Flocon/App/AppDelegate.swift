@@ -60,7 +60,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func applyPreferences() {
         for scene in screens {
             scene.simulation.snowfall = Preferences.snowfall
-            scene.simulation.windStrength = Preferences.wind
+            scene.simulation.windStrength = Preferences.windStrength
             scene.simulation.accumulates = Preferences.accumulate
             scene.simulation.thaws = Preferences.meltSnow
             scene.simulation.interactions = Preferences.interactions
@@ -90,10 +90,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         group("Snowfall", key: "snowfall", action: #selector(selectSnowfall(_:)),
               options: Snowfall.allCases.map { ($0.title, $0.rawValue) }, in: snow)
         group("Wind", key: "wind", action: #selector(selectWind(_:)),
-              options: ["Still", "Gentle", "Breezy", "Gusty"].enumerated().map { ($1, $0) }, in: snow)
+              options: ["Still", "Gentle", "Breezy", "Gusty", "Stormy", "Blizzard"].enumerated().map { ($1, $0) }, in: snow)
         snow.addItem(.separator())
         add("Accumulate Snow", key: "accumulate", to: snow)
         add("Snow on Windows", key: "snowOnWindows", to: snow)
+        add("Behind Windows", key: "behindWindows", to: snow)
         add("Cursor Interactions", key: "interactions", to: snow)
         add("Melt Snow", key: "meltSnow", to: snow)
         snow.addItem(.separator())
@@ -113,7 +114,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(.separator())
         let settings = submenu("Settings", in: menu)
         add("Energy Saving", key: "energySaver", to: settings)
-        add("Behind Windows", key: "behindWindows", to: settings)
         add("Show in Screenshots", key: "showInScreenshots", to: settings)
         let login = settings.addItem(withTitle: "Launch at Login", action: #selector(toggleLogin), keyEquivalent: "")
         login.target = self

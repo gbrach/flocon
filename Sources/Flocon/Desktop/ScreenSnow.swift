@@ -39,7 +39,7 @@ final class ScreenSnow {
         simulation.accumulates = Preferences.accumulate
         simulation.thaws = Preferences.meltSnow
         simulation.interactions = Preferences.interactions
-        simulation.windStrength = Preferences.wind
+        simulation.windStrength = Preferences.windStrength
         renderer.dockOverlay = dock
         renderer.cursorLocation = { [weak self] in
             guard let self else { return SIMD2(-10000, -10000) }

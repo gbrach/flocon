@@ -38,9 +38,12 @@ enum Preferences {
         set { defaults.set(newValue.rawValue, forKey: "snowfall") }
     }
     static var wind: Float {
-        get { min(3, max(0, defaults.float(forKey: "wind"))) }
+        get { min(Float(windStrengths.count - 1), max(0, defaults.float(forKey: "wind"))) }
         set { defaults.set(newValue, forKey: "wind") }
     }
+    /// Simulation strength for each wind level; the first four match the original Still...Gusty scale.
+    static let windStrengths: [Float] = [0, 1, 2, 3, 5, 8]
+    static var windStrength: Float { windStrengths[Int(wind.rounded())] }
     static var accumulate: Bool {
         get { defaults.bool(forKey: "accumulate") }
         set { defaults.set(newValue, forKey: "accumulate") }
